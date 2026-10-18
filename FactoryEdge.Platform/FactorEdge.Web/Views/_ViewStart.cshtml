@@ -1,0 +1,10 @@
+﻿@{
+    var controller = ViewContext.RouteData.Values["controller"]?.ToString();
+
+    Layout = controller switch
+    {
+        "Platform" => "_PlatformLayout",
+        "Account" => "_AuthLayout",
+        _ => "_TenantLayout"
+    };
+}

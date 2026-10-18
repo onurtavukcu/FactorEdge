@@ -1,0 +1,61 @@
+﻿@model FactorEdge.Application.Features.Tenants.Models.CreateTenantRequest
+
+@{
+    ViewData["Title"] = "Yeni Tenant";
+}
+
+<div class="container mt-4">
+    <h2>Yeni Tenant Oluştur</h2>
+
+    <form asp-controller="Platform"
+          asp-action="Create"
+          method="post">
+
+        @Html.AntiForgeryToken()
+
+        <div asp-validation-summary="All"
+             class="text-danger mb-3"></div>
+
+        <div class="mb-3">
+            <label asp-for="Name" class="form-label">
+                Şirket Adı
+            </label>
+            <input asp-for="Name" class="form-control" required />
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="AdminUserName" class="form-label">
+                Yönetici Adı
+            </label>
+            <input asp-for="AdminUserName" class="form-control" required />
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="AdminEmail" class="form-label">
+                Yönetici E-posta
+            </label>
+            <input asp-for="AdminEmail"
+                   type="email"
+                   class="form-control"
+                   required />
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="AdminPassword" class="form-label">
+                Yönetici Şifresi
+            </label>
+            <input asp-for="AdminPassword"
+                   type="password"
+                   class="form-control"
+                   required />
+        </div>
+
+        <button type="submit" class="btn btn-primary">
+            Tenant Oluştur
+        </button>
+
+        <a asp-action="Index" class="btn btn-secondary">
+            İptal
+        </a>
+    </form>
+</div>

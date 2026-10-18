@@ -1,0 +1,200 @@
+﻿
+@model List<FactorEdge.Application.DTOs.Devices.DeviceResponse>
+
+@{
+    ViewData["Title"] = "Cihazlar";
+    Layout = "_TenantLayout";
+
+    var isAdmin = User.IsInRole("TenantAdmin");
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fe-page-title mb-1">Cihazlar</h2>
+        <p class="fe-page-description mb-0">
+            Fabrikanızdaki MQTT ve Modbus cihazlarını izleyin.
+        </p>
+    </div>
+
+    @if (isAdmin)
+    {
+        <a asp-action="Create" class="fe-btn-primary">
+            <i class="bi bi-plus-lg me-2"></i>
+            Yeni Cihaz
+        </a>
+    }
+</div>
+
+<div class="fe-card">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Cihaz</th>
+                    <th>Protokol</th>
+                    <th>Host / Port</th>
+                    <th>Bağlantı</th>
+                    <th>Son Görülme</th>
+                    <th>İşlemler</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                @foreach (var device in Model)
+                {
+                    <tr data-device-id="@device.Id">
+                        <td>
+                            <div class="fw-semibold">@device.Name</div>
+                            <div class="small text-muted">
+                                @device.DeviceCode
+                            </div>
+                        </td>
+
+                        <td>
+                            <span class="badge bg-primary-subtle text-primary">
+                                @device.Protocol
+                            </span>
+                        </td>
+
+                        <td>@device.Host:@device.Port</td>
+
+                        <td data-device-status>
+                            @if (!device.IsActive)
+                            {
+                                <span class="badge bg-secondary">Pasif</span>
+                            }
+                            else if (device.ConnectionStatus ==
+                                FactorEdge.Domain.Enums.DeviceConnectionStatus.Connected)
+                            {
+                                <span class="badge bg-success">Connected</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-danger">Disconnected</span>
+                            }
+                        </td>
+
+                        <td data-device-last-seen>
+                            @(device.LastSeenUtc?.ToLocalTime()
+                                .ToString("dd.MM.yyyy HH:mm:ss") ?? "Henüz veri yok")
+                        </td>
+
+                        <td>
+                            <div class="d-flex gap-2">
+                                <a asp-action="Details"
+                                   asp-route-id="@device.Id"
+                                   class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-graph-up me-1"></i>
+                                    İzle
+                                </a>
+
+                                @if (isAdmin)
+                                {
+                                    <a asp-action="Edit"
+                                       asp-route-id="@device.Id"
+                                       class="btn btn-sm btn-outline-secondary">
+                                        Düzenle
+                                    </a>
+
+                                    <form asp-action="Delete"
+                                          asp-route-id="@device.Id"
+                                          method="post"
+                                          onsubmit="return confirm('Cihaz ve Docker simülatörü silinecek. Emin misiniz?');">
+                                        @Html.AntiForgeryToken()
+
+                                        <button type="submit"
+                                                class="btn btn-sm btn-outline-danger">
+                                            <i class="bi bi-trash me-1"></i>
+                                            Sil
+                                        </button>
+                                    </form>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        @if (Model.Count == 0)
+        {
+            <div class="text-center text-muted py-5">
+                <i class="bi bi-cpu fs-1 d-block mb-3"></i>
+                Henüz kayıtlı cihaz bulunmuyor.
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (() => {
+            const connection = new signalR.HubConnectionBuilder()
+                .withUrl("/hubs/device-telemetry")
+                .withAutomaticReconnect()
+                .build();
+
+            function updateDevices(devices) {
+                for (const device of devices) {
+                    const row = document.querySelector(
+                        `tr[data-device-id="${device.deviceId}"]`
+                    );
+
+                    if (!row)
+                        continue;
+
+                    const statusCell =
+                        row.querySelector("[data-device-status]");
+
+                    const lastSeenCell =
+                        row.querySelector("[data-device-last-seen]");
+
+                    if (statusCell) {
+                        if (!device.isActive) {
+                            statusCell.innerHTML =
+                                '<span class="badge bg-secondary">Pasif</span>';
+                        }
+                        else if (device.connectionStatus === "Connected") {
+                            statusCell.innerHTML =
+                                '<span class="badge bg-success">Connected</span>';
+                        }
+                        else {
+                            statusCell.innerHTML =
+                                '<span class="badge bg-danger">Disconnected</span>';
+                        }
+                    }
+
+                    if (lastSeenCell) {
+                        lastSeenCell.textContent = device.lastSeenUtc
+                            ? new Date(device.lastSeenUtc)
+                                .toLocaleString("tr-TR")
+                            : "Henüz veri yok";
+                    }
+                }
+            }
+
+            connection.on("DeviceListUpdated", updateDevices);
+
+            async function connect() {
+                try {
+                    await connection.start();
+                    await connection.invoke("JoinTenant");
+                }
+                catch (error) {
+                    console.error("Cihaz listesi SignalR hatası:", error);
+                }
+            }
+
+            connection.onreconnected(async () => {
+                try {
+                    await connection.invoke("JoinTenant");
+                }
+                catch (error) {
+                    console.error("Tenant aboneliği başarısız:", error);
+                }
+            });
+
+            connect();
+        })();
+    </script>
+}

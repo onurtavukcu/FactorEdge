@@ -1,0 +1,149 @@
+﻿
+@model FactorEdge.Application.Features.Tenants.Models.PlatformDashboardDto
+
+@{
+    ViewData["Title"] = "Platform Dashboard";
+    Layout = "_PlatformLayout";
+
+    var total = Model.TotalTenants;
+
+    double Percentage(int count) =>
+        total == 0 ? 0 : count * 100.0 / total;
+}
+
+<div class="mb-4">
+    <h2 class="fe-page-title mb-1">Platform Genel Bakış</h2>
+    <p class="fe-page-description">
+        FactorEdge platformundaki tenant ve kullanıcı istatistikleri.
+    </p>
+</div>
+
+<div class="row g-4 mb-4">
+
+    <div class="col-md-6 col-xl-3">
+        <div class="fe-card h-100">
+            <div class="d-flex justify-content-between">
+                <div>
+                    <div class="text-muted small">Toplam Tenant</div>
+                    <h2 class="fw-bold mt-3">@Model.TotalTenants</h2>
+                    <div class="text-muted small">Kayıtlı fabrikalar</div>
+                </div>
+                <div class="fe-stat-icon fe-stat-blue">
+                    <i class="bi bi-buildings"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-xl-3">
+        <div class="fe-card h-100">
+            <div class="d-flex justify-content-between">
+                <div>
+                    <div class="text-muted small">Aktif Tenant</div>
+                    <h2 class="fw-bold mt-3">@Model.ActiveTenants</h2>
+                    <div class="text-success small">Aktif fabrikalar</div>
+                </div>
+                <div class="fe-stat-icon fe-stat-green">
+                    <i class="bi bi-check-circle"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-xl-3">
+        <div class="fe-card h-100">
+            <div class="d-flex justify-content-between">
+                <div>
+                    <div class="text-muted small">Askıya Alınan</div>
+                    <h2 class="fw-bold mt-3">@Model.SuspendedTenants</h2>
+                    <div class="text-muted small">Suspended tenant</div>
+                </div>
+                <div class="fe-stat-icon fe-stat-orange">
+                    <i class="bi bi-pause-circle"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-xl-3">
+        <div class="fe-card h-100">
+            <div class="d-flex justify-content-between">
+                <div>
+                    <div class="text-muted small">Toplam Kullanıcı</div>
+                    <h2 class="fw-bold mt-3">@Model.TotalUsers</h2>
+                    <div class="text-muted small">Platform hesapları</div>
+                </div>
+                <div class="fe-stat-icon fe-stat-purple">
+                    <i class="bi bi-people"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<div class="row g-4">
+
+    <div class="col-lg-7">
+        <div class="fe-card h-100">
+            <h5 class="fw-bold mb-1">Tenant Durumları</h5>
+            <p class="text-muted small mb-4">
+                Fabrikaların platformdaki güncel durumları
+            </p>
+
+            @foreach (var item in new[]
+            {
+                new { Name = "Aktif", Count = Model.ActiveTenants, Color = "bg-success" },
+                new { Name = "Askıya Alınan", Count = Model.SuspendedTenants, Color = "bg-warning" },
+                new { Name = "Hatalı Kurulum", Count = Model.FailedTenants, Color = "bg-danger" },
+                new { Name = "Kurulum Aşamasında", Count = Model.ProvisioningTenants, Color = "bg-info" }
+            })
+            {
+                <div class="mb-4">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="small">@item.Name</span>
+                        <strong>@item.Count</strong>
+                    </div>
+
+                    <div class="progress fe-progress">
+                        <div class="progress-bar @item.Color"
+                             style="width:@(Percentage(item.Count).ToString(System.Globalization.CultureInfo.InvariantCulture))%">
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="fe-card h-100">
+            <h5 class="fw-bold mb-1">Kullanıcı Dağılımı</h5>
+            <p class="text-muted small mb-4">
+                Platformdaki hesap türleri
+            </p>
+
+            <div class="fe-summary-row">
+                <span>SuperAdmin</span>
+                <strong>@(Model.TotalUsers - Model.TenantAdmins - Model.RegularUsers)</strong>
+            </div>
+
+            <div class="fe-summary-row">
+                <span>TenantAdmin</span>
+                <strong>@Model.TenantAdmins</strong>
+            </div>
+
+            <div class="fe-summary-row">
+                <span>RegularUser</span>
+                <strong>@Model.RegularUsers</strong>
+            </div>
+
+            <a asp-controller="Platform"
+               asp-action="Index"
+               class="fe-btn-primary mt-4">
+                <i class="bi bi-buildings me-2"></i>
+                Tenant Yönetimi
+            </a>
+        </div>
+    </div>
+
+</div>

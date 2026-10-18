@@ -1,0 +1,164 @@
+﻿@model FactorEdge.Application.Features.Auth.Models.LoginRequest
+
+@{
+    Layout = "_AuthLayout";
+    ViewData["Title"] = "Giriş Yap";
+}
+
+<div class="fe-auth">
+
+    <!-- Sol Tanıtım Alanı -->
+    <section class="fe-auth-brand">
+
+        <div class="d-flex align-items-center gap-3">
+            <div class="fe-brand-icon">
+                <i class="bi bi-cpu"></i>
+            </div>
+
+            <div>
+                <div class="fe-brand-title">FactorEdge</div>
+                <div class="fe-brand-subtitle">Smart Factory Platform</div>
+            </div>
+        </div>
+
+        <div style="position:relative;z-index:1;">
+
+            <div class="mb-4">
+                <span class="badge rounded-pill px-3 py-2"
+                      style="background:rgba(96,165,250,.15);color:#93c5fd;">
+                    <i class="bi bi-circle-fill me-2"
+                       style="font-size:8px;"></i>
+                    INDUSTRIAL IoT PLATFORM
+                </span>
+            </div>
+
+            <h1 class="fe-auth-headline">
+                Fabrikanızın verileri,
+                <span style="color:#60a5fa;">tek bir yerde.</span>
+            </h1>
+
+            <p class="fe-auth-description">
+                Cihazlarınızı izleyin, telemetri verilerini
+                takip edin ve fabrikanızın dijital
+                operasyonlarını tek platformdan yönetin.
+            </p>
+
+            <div class="mt-5">
+
+                <div class="fe-auth-feature">
+                    <span class="fe-auth-feature-icon">
+                        <i class="bi bi-broadcast"></i>
+                    </span>
+                    MQTT ve Modbus entegrasyonu
+                </div>
+
+                <div class="fe-auth-feature">
+                    <span class="fe-auth-feature-icon">
+                        <i class="bi bi-graph-up-arrow"></i>
+                    </span>
+                    Telemetri ve cihaz izleme
+                </div>
+
+                <div class="fe-auth-feature">
+                    <span class="fe-auth-feature-icon">
+                        <i class="bi bi-shield-lock"></i>
+                    </span>
+                    Güvenli tenant izolasyonu
+                </div>
+
+            </div>
+        </div>
+
+        <div class="fe-auth-brand-footer"
+             style="color:#7890b1;font-size:12px;">
+            © @DateTime.Now.Year FactorEdge
+        </div>
+
+    </section>
+
+    <!-- Sağ Login Alanı -->
+    <section class="fe-auth-form-area">
+
+        <div class="fe-login-box">
+
+            <div class="mb-4"
+                 style="width:55px;height:55px;border-radius:16px;
+                        background:#eaf1ff;color:#2563eb;
+                        display:grid;place-items:center;font-size:24px;">
+                <i class="bi bi-shield-lock"></i>
+            </div>
+
+            <h2 class="fe-login-heading">
+                Hoş geldiniz!
+            </h2>
+
+            <p class="fe-login-description">
+                FactorEdge hesabınızla giriş yaparak
+                yönetim paneline erişebilirsiniz.
+            </p>
+
+            <form asp-controller="Account"
+                  asp-action="Login"
+                  method="post">
+
+                @Html.AntiForgeryToken()
+
+                <div asp-validation-summary="ModelOnly"
+                     class="alert alert-danger"
+                     role="alert"
+                     style="display:@(ViewData.ModelState.ErrorCount > 0 ? "block" : "none")">
+                </div>
+
+                <div class="mb-4">
+                    <label asp-for="Email" class="form-label">
+                        E-posta Adresi
+                    </label>
+
+                    <input asp-for="Email"
+                           type="email"
+                           class="form-control"
+                           placeholder="ornek@firma.com"
+                           autocomplete="username" />
+
+                    <span asp-validation-for="Email"
+                          class="text-danger small"></span>
+                </div>
+
+                <div class="mb-4">
+                    <label asp-for="Password" class="form-label">
+                        Şifre
+                    </label>
+
+                    <input asp-for="Password"
+                           type="password"
+                           class="form-control"
+                           placeholder="••••••••"
+                           autocomplete="current-password" />
+
+                    <span asp-validation-for="Password"
+                          class="text-danger small"></span>
+                </div>
+
+                <button type="submit"
+                        class="fe-login-button">
+                    Giriş Yap
+                    <i class="bi bi-arrow-right ms-2"></i>
+                </button>
+
+            </form>
+
+            <div class="text-center mt-5"
+                 style="font-size:12px;color:#94a3b8;">
+                <i class="bi bi-lock me-1"></i>
+                Güvenli oturum açma
+            </div>
+
+        </div>
+
+    </section>
+
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

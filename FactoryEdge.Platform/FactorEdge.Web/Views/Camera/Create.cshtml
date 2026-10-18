@@ -1,0 +1,113 @@
+﻿@using FactorEdge.Application.DTOs.Cameras
+@model CreateCameraRequest
+
+@{
+    ViewData["Title"] = "Yeni Kamera";
+}
+
+<div class="container-fluid py-4">
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-xl-6">
+
+            <div class="card shadow-sm">
+                <div class="card-header bg-transparent py-3">
+                    <h4 class="mb-0">Yeni Kamera Ekle</h4>
+                </div>
+
+                <div class="card-body">
+
+                    <div class="alert alert-info">
+                        Kamera kaydedildiğinde Ubuntu üzerinde
+                        CameraWorker Docker container'ı
+                        otomatik oluşturulacaktır.
+                    </div>
+
+                    <form asp-controller="Camera"
+                          asp-action="Create"
+                          method="post">
+
+                        @Html.AntiForgeryToken()
+
+                        <div asp-validation-summary="All"
+                             class="text-danger mb-3"></div>
+
+                        <div class="mb-3">
+                            <label asp-for="DeviceCode"
+                                   class="form-label">
+                                Kamera Kodu
+                            </label>
+
+                            <input asp-for="DeviceCode"
+                                   class="form-control"
+                                   placeholder="camera-02"
+                                   maxlength="64"
+                                   required />
+
+                            <span asp-validation-for="DeviceCode"
+                                  class="text-danger"></span>
+
+                            <small class="text-muted">
+                                Harf, rakam, tire ve alt çizgi kullanılabilir.
+                            </small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Name"
+                                   class="form-label">
+                                Kamera Adı
+                            </label>
+
+                            <input asp-for="Name"
+                                   class="form-control"
+                                   placeholder="Üretim Hattı 1 Operatör Kamerası"
+                                   maxlength="200"
+                                   required />
+
+                            <span asp-validation-for="Name"
+                                  class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="StreamUrl"
+                                   class="form-label">
+                                Kamera Yayın Adresi
+                            </label>
+
+                            <input asp-for="StreamUrl"
+                                   type="url"
+                                   class="form-control"
+                                   placeholder="http://192.168.1.9:8080/video"
+                                   maxlength="2048"
+                                   required />
+
+                            <span asp-validation-for="StreamUrl"
+                                  class="text-danger"></span>
+
+                            <small class="text-muted">
+                                IP Webcam uygulamasındaki MJPEG
+                                yayın adresini girin.
+                            </small>
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2">
+                            <a asp-controller="Camera"
+                               asp-action="Index"
+                               class="btn btn-outline-secondary">
+                                Vazgeç
+                            </a>
+
+                            <button type="submit"
+                                    class="btn btn-primary">
+                                Kamera Oluştur
+                            </button>
+                        </div>
+
+                    </form>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>

@@ -1,0 +1,83 @@
+﻿@model FactorEdge.Application.Features.Tenants.Models.TenantDetailsDto
+
+@using FactorEdge.Domain.Enums
+
+@{
+    ViewData["Title"] = "Tenant Detayları";
+}
+
+<div class="container mt-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">Tenant Detayları</h2>
+
+        <a asp-controller="Platform"
+           asp-action="Index"
+           class="btn btn-outline-secondary">
+            Listeye Dön
+        </a>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h4 class="card-title mb-0">@Model.Name</h4>
+
+                @if (Model.Status is TenantStatus.Active or TenantStatus.Suspended)
+                {
+                    <a asp-controller="Platform"
+                       asp-action="Edit"
+                       asp-route-id="@Model.Id"
+                       class="btn btn-primary">
+                        Düzenle
+                    </a>
+                }
+            </div>
+
+            <dl class="row">
+                <dt class="col-sm-3">Tenant ID</dt>
+                <dd class="col-sm-9">@Model.Id</dd>
+
+                <dt class="col-sm-3">Veritabanı</dt>
+                <dd class="col-sm-9">@Model.DatabaseName</dd>
+
+                <dt class="col-sm-3">Durum</dt>
+                <dd class="col-sm-9">
+                    @if (Model.Status == TenantStatus.Active)
+                    {
+                        <span class="badge bg-success">Active</span>
+                    }
+                    else if (Model.Status == TenantStatus.Suspended)
+                    {
+                        <span class="badge bg-warning text-dark">Suspended</span>
+                    }
+                    else if (Model.Status == TenantStatus.Failed)
+                    {
+                        <span class="badge bg-danger">Failed</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-secondary">@Model.Status</span>
+                    }
+                </dd>
+
+                <dt class="col-sm-3">Kullanıcı Sayısı</dt>
+                <dd class="col-sm-9">@Model.UserCount</dd>
+
+                <dt class="col-sm-3">Oluşturulma Tarihi</dt>
+                <dd class="col-sm-9">
+                    @Model.CreatedAtUtc.ToLocalTime().ToString("dd.MM.yyyy HH:mm")
+                </dd>
+            </dl>
+
+            @if (!string.IsNullOrWhiteSpace(Model.ProvisioningError))
+            {
+                <div class="alert alert-danger mt-3">
+                    <strong>Provisioning Hatası:</strong>
+                    @Model.ProvisioningError
+                </div>
+            }
+        </div>
+    </div>
+</div>

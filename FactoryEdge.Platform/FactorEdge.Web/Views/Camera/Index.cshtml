@@ -1,0 +1,440 @@
+﻿
+@using FactorEdge.Application.DTOs.Cameras
+@model List<CameraResponse>
+
+@{
+    ViewData["Title"] = "Kameralar";
+    Layout = "_TenantLayout";
+
+    var canManage = ViewBag.CanManage is true;
+}
+
+<div class="container-fluid py-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="mb-1">Kamera Yönetimi</h3>
+            <p class="text-muted mb-0">
+                Operatör kameraları ve canlı durum takibi
+            </p>
+        </div>
+
+        @if (canManage)
+        {
+            <a asp-controller="Camera"
+               asp-action="Create"
+               class="btn btn-primary">
+                <i class="bi bi-plus-lg me-1"></i>
+                Yeni Kamera
+            </a>
+        }
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>Kamera Kodu</th>
+                            <th>Kamera Adı</th>
+                            <th>Operatör</th>
+                            <th>Bağlantı</th>
+                            <th>Aktif</th>
+                            <th>Son Durum</th>
+                            <th>Docker Container</th>
+
+                            @if (canManage)
+                            {
+                                <th class="text-end">İşlemler</th>
+                            }
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @if (Model.Count == 0)
+                        {
+                            <tr>
+                                <td colspan="@(canManage ? 8 : 7)"
+                                    class="text-center text-muted py-4">
+                                    Henüz kayıtlı kamera bulunmuyor.
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            @foreach (var camera in Model)
+                            {
+                                var statusClass = camera.OperatorStatus switch
+                                {
+                                    "Normal" => "bg-success",
+                                    "Fatigued" => "bg-warning text-dark",
+                                    "Absent" => "bg-danger",
+                                    _ => "bg-secondary"
+                                };
+
+                                <tr data-camera-id="@camera.DeviceId">
+
+                                    <td>
+                                        <strong>@camera.DeviceCode</strong>
+                                    </td>
+
+                                    <td>@camera.Name</td>
+
+                                    <td>
+                                        <span class="badge @statusClass"
+                                              data-field="operatorStatus">
+                                            @camera.OperatorStatus
+                                        </span>
+                                    </td>
+
+                                    <td data-field="connectionStatus">
+                                        @camera.ConnectionStatus
+                                    </td>
+
+                                    <td data-field="isActive">
+                                        @if (camera.IsActive)
+                                        {
+                                            <span class="badge bg-success">
+                                                Aktif
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary">
+                                                Pasif
+                                            </span>
+                                        }
+                                    </td>
+
+                                    <td data-field="lastStatusAtUtc">
+                                        @(camera.LastStatusAtUtc?.ToLocalTime()
+                                            .ToString("dd.MM.yyyy HH:mm:ss") ?? "-")
+                                    </td>
+
+                                    <td>
+                                        <small class="text-muted">
+                                            @(camera.ContainerName ?? "-")
+                                        </small>
+                                    </td>
+
+                                    @if (canManage)
+                                    {
+                                        <td class="text-end text-nowrap">
+
+                                            <a asp-controller="Camera"
+                                               asp-action="Edit"
+                                               asp-route-deviceId="@camera.DeviceId"
+                                               class="btn btn-sm btn-outline-primary">
+                                                <i class="bi bi-pencil me-1"></i>
+                                                Düzenle
+                                            </a>
+
+                                            <form asp-controller="Camera"
+                                                  asp-action="Delete"
+                                                  asp-route-deviceId="@camera.DeviceId"
+                                                  method="post"
+                                                  class="d-inline"
+                                                  onsubmit="return confirm('Bu kamerayı silmek istediğinize emin misiniz?');">
+
+                                                @Html.AntiForgeryToken()
+
+                                                <button type="submit"
+                                                        class="btn btn-sm btn-outline-danger">
+                                                    <i class="bi bi-trash me-1"></i>
+                                                    Sil
+                                                </button>
+                                            </form>
+
+                                        </td>
+                                    }
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+<div class="card shadow-sm mt-4">
+    <div class="card-body">
+
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <h5 class="mb-1">
+                    <i class="bi bi-clock-history me-2"></i>
+                    Kamera Durum Geçmişi
+                </h5>
+
+                <small class="text-muted">
+                    Son 50 operatör durum değişikliği
+                </small>
+            </div>
+
+            <span class="badge bg-light text-dark border">
+                Canlı
+            </span>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>Tarih / Saat</th>
+                        <th>Kamera Kodu</th>
+                        <th>Kamera Adı</th>
+                        <th>Operatör Durumu</th>
+                    </tr>
+                </thead>
+
+                <tbody id="cameraHistoryBody">
+                    <tr>
+                        <td colspan="4"
+                            class="text-center text-muted py-4">
+                            Kamera geçmişi yükleniyor...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+</div>
+
+@section Scripts
+{
+    <script>
+        (() => {
+            // Program.cs içindeki MapHub adresiyle aynı olmalı.
+            const hubUrl = "/hubs/device-telemetry";
+
+            if (!window.signalR) {
+                console.error("SignalR kütüphanesi yüklenemedi.");
+                return;
+            }
+
+            const connection = new signalR.HubConnectionBuilder()
+                .withUrl(hubUrl)
+                .withAutomaticReconnect()
+                .build();
+
+            function getStatusClass(status) {
+                switch (status) {
+                    case "Normal":
+                        return "badge bg-success";
+
+                    case "Fatigued":
+                        return "badge bg-warning text-dark";
+
+                    case "Absent":
+                        return "badge bg-danger";
+
+                    default:
+                        return "badge bg-secondary";
+                }
+            }
+            
+            const historyUrl = '@Url.Action("History", "Camera")';
+
+            function getHistoryStatusClass(status) {
+                switch (status) {
+                    case "Normal":
+                        return "badge bg-success";
+                    case "Absent":
+                        return "badge bg-danger";
+                    case "Fatigued":
+                        return "badge bg-warning text-dark";
+                    default:
+                        return "badge bg-secondary";
+                }
+            }
+
+            async function loadCameraHistory() {
+                const tbody = document.getElementById("cameraHistoryBody");
+
+                if (!tbody)
+                    return;
+
+                try {
+                    const response = await fetch(historyUrl, {
+                        credentials: "same-origin",
+                        cache: "no-store"
+                    });
+
+                    if (!response.ok)
+                        throw new Error(`HTTP ${response.status}`);
+
+                    const histories = await response.json();
+
+                    tbody.replaceChildren();
+
+                    if (histories.length === 0) {
+                        const tr = tbody.insertRow();
+                        const td = tr.insertCell();
+
+                        td.colSpan = 4;
+                        td.className = "text-center text-muted py-4";
+                        td.textContent = "Henüz kamera durum geçmişi yok.";
+                        return;
+                    }
+
+                    for (const item of histories) {
+                        const tr = tbody.insertRow();
+
+                        const dateCell = tr.insertCell();
+                        dateCell.textContent = new Date(
+                            item.createdAtUtc
+                        ).toLocaleString("tr-TR");
+
+                        const codeCell = tr.insertCell();
+                        codeCell.textContent = item.deviceCode;
+
+                        const nameCell = tr.insertCell();
+                        nameCell.textContent = item.cameraName;
+
+                        const statusCell = tr.insertCell();
+
+                        const badge = document.createElement("span");
+                        badge.className = getHistoryStatusClass(item.status);
+                        badge.textContent = item.status;
+
+                        statusCell.appendChild(badge);
+                    }
+                }
+                catch (error) {
+                    console.error("Kamera geçmişi okunamadı:", error);
+                }
+            }
+
+            function updateCamera(data) {
+                if (!data || !data.deviceId)
+                    return;
+
+                const cameraId = String(data.deviceId).toLowerCase();
+
+                const row = Array.from(
+                    document.querySelectorAll("tr[data-camera-id]")
+                ).find(x =>
+                    x.dataset.cameraId?.toLowerCase() === cameraId
+                );
+
+                if (!row)
+                    return;
+
+                // Operatör durumu
+                const statusElement = row.querySelector(
+                    '[data-field="operatorStatus"]'
+                );
+
+                if (statusElement) {
+                    const status = data.operatorStatus ?? "Unknown";
+
+                    statusElement.textContent = status;
+                    statusElement.className = getStatusClass(status);
+                }
+
+                // Bağlantı durumu
+                const connectionElement = row.querySelector(
+                    '[data-field="connectionStatus"]'
+                );
+
+                if (connectionElement) {
+                    connectionElement.textContent =
+                        data.connectionStatus ?? "-";
+                }
+
+                // Son güncelleme zamanı
+                const timeElement = row.querySelector(
+                    '[data-field="lastStatusAtUtc"]'
+                );
+
+                if (timeElement) {
+                    if (data.lastStatusAtUtc) {
+                        const date = new Date(data.lastStatusAtUtc);
+
+                        timeElement.textContent =
+                            isNaN(date.getTime())
+                                ? "-"
+                                : date.toLocaleString("tr-TR", {
+                                    day: "2-digit",
+                                    month: "2-digit",
+                                    year: "numeric",
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                    second: "2-digit"
+                                });
+                    }
+                    else {
+                        timeElement.textContent = "-";
+                    }
+                }
+
+                // Aktiflik durumu
+                const activeElement = row.querySelector(
+                    '[data-field="isActive"]'
+                );
+
+                if (activeElement) {
+                    const badge = activeElement.querySelector(".badge");
+
+                    if (badge) {
+                        badge.textContent =
+                            data.isActive ? "Aktif" : "Pasif";
+
+                        badge.className = data.isActive
+                            ? "badge bg-success"
+                            : "badge bg-secondary";
+                    }
+                }
+            }
+
+           connection.on("CameraStatusUpdated", async data => {updateCamera(data); await loadCameraHistory(); 
+           });
+
+            async function joinTenant() {
+                try {
+                    await connection.invoke("JoinTenant");
+
+                    console.log(
+                        "Camera SignalR tenant grubuna katıldı."
+                    );
+                }
+                catch (error) {
+                    console.error(
+                        "Camera SignalR tenant bağlantısı başarısız:",
+                        error
+                    );
+                }
+            }
+
+           connection.onreconnected(async () => {
+                await joinTenant();
+                await loadCameraHistory();
+            });
+
+            async function start() {
+                try {
+                    await connection.start();
+
+                    await joinTenant();
+                    await loadCameraHistory();
+                    console.log(
+                        "Camera SignalR connected."
+                    );
+                }
+                catch (error) {
+                    console.error(
+                        "Camera SignalR connection failed:",
+                        error
+                    );
+                }
+            }
+
+            start();
+        })();
+    </script>
+}

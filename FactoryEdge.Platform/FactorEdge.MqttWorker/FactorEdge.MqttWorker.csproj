@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk.Worker">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>dotnet-FactorEdge.MqttWorker-0663fc67-07d4-4c02-bcf6-0efd4ddbb062</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.12" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.12" />
+    <PackageReference Include="MQTTnet" Version="5.2.0.1603" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\FactorEdge\FactorEdge.Contracts\FactorEdge.Contracts.csproj" />
+    <ProjectReference Include="..\FactorEdge.Application\FactorEdge.Application.csproj" />
+    <ProjectReference Include="..\FactorEdge.Infrastructure\FactorEdge.Infrastructure.csproj" />
+  </ItemGroup>
+</Project>

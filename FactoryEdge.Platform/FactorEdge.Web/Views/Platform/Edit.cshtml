@@ -1,0 +1,144 @@
+﻿@model FactorEdge.Application.Features.Tenants.Models.TenantEditDto
+
+@using FactorEdge.Domain.Enums
+
+@{
+    ViewData["Title"] = "Tenant Düzenle";
+}
+
+<div class="container mt-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">Tenant Düzenle</h2>
+
+        <a asp-controller="Platform"
+           asp-action="Details"
+           asp-route-id="@Model.Id"
+           class="btn btn-outline-secondary">
+            Detaylara Dön
+        </a>
+    </div>
+
+    <form asp-controller="Platform"
+          asp-action="Edit"
+          asp-route-id="@Model.Id"
+          method="post">
+
+        @Html.AntiForgeryToken()
+
+        <input asp-for="Id" type="hidden" />
+
+        <div asp-validation-summary="All"
+             class="text-danger mb-3"></div>
+
+        <!-- Tenant bilgileri -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <strong>Şirket Bilgileri</strong>
+            </div>
+
+            <div class="card-body">
+
+                <div class="mb-3">
+                    <label asp-for="Name" class="form-label">
+                        Şirket Adı
+                    </label>
+
+                    <input asp-for="Name"
+                           class="form-control" />
+
+                    <span asp-validation-for="Name"
+                          class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Status" class="form-label">
+                        Tenant Durumu
+                    </label>
+
+                    <select asp-for="Status"
+                            class="form-select">
+
+                        <option value="@((int)TenantStatus.Active)">
+                            Active
+                        </option>
+
+                        <option value="@((int)TenantStatus.Suspended)">
+                            Suspended
+                        </option>
+                    </select>
+
+                    <span asp-validation-for="Status"
+                          class="text-danger"></span>
+
+                    <small class="text-muted">
+                        Suspended durumundaki tenant kullanıcıları
+                        sisteme giriş yapamaz.
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        <!-- TenantAdmin bilgileri -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <strong>Tenant Yöneticisi</strong>
+            </div>
+
+            <div class="card-body">
+
+                <div class="mb-3">
+                    <label asp-for="AdminUserName"
+                           class="form-label">
+                        Kullanıcı Adı
+                    </label>
+
+                    <input asp-for="AdminUserName"
+                           class="form-control" />
+
+                    <span asp-validation-for="AdminUserName"
+                          class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="AdminEmail"
+                           class="form-label">
+                        E-posta
+                    </label>
+
+                    <input asp-for="AdminEmail"
+                           type="email"
+                           class="form-control" />
+
+                    <span asp-validation-for="AdminEmail"
+                          class="text-danger"></span>
+                </div>
+
+                <div class="form-check mb-3">
+                    <input asp-for="AdminIsActive"
+                           class="form-check-input" />
+
+                    <label asp-for="AdminIsActive"
+                           class="form-check-label">
+                        Yönetici hesabı aktif
+                    </label>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary">
+                Değişiklikleri Kaydet
+            </button>
+
+            <a asp-controller="Platform"
+               asp-action="Details"
+               asp-route-id="@Model.Id"
+               class="btn btn-secondary">
+                İptal
+            </a>
+        </div>
+
+    </form>
+</div>

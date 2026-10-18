@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk.Worker">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>dotnet-FactorEdge.ModbusWorker-0b27c860-ee65-4aa0-a438-dc1b34c2fac0</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.12" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.12" />
+    <PackageReference Include="NModbus" Version="3.0.83" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\FactorEdge\FactorEdge.Contracts\FactorEdge.Contracts.csproj" />
+    <ProjectReference Include="..\FactorEdge.Application\FactorEdge.Application.csproj" />
+    <ProjectReference Include="..\FactorEdge.Infrastructure\FactorEdge.Infrastructure.csproj" />
+  </ItemGroup>
+</Project>

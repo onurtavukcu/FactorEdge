@@ -1,0 +1,333 @@
+﻿
+@model FactorEdge.Application.Features.Users.Models.TenantDashboardDto
+
+@{
+    ViewData["Title"] = "Dashboard";
+    Layout = "_TenantLayout";
+
+    var isTenantAdmin = User.IsInRole("TenantAdmin");
+
+    var runningRate = Math.Clamp(Model.Efficiency.RunningRate, 0, 100);
+    var runningRateCss = runningRate.ToString(
+        System.Globalization.CultureInfo.InvariantCulture);
+}
+
+<div class="mb-4">
+    <h2 class="fe-page-title mb-1">Fabrika Genel Bakış</h2>
+    <p class="fe-page-description">
+        Cihazlarınızı, telemetri kayıtlarınızı ve kullanıcı bilgilerini takip edin.
+    </p>
+</div>
+
+<div class="row g-4 mb-4">
+
+    <div class="col-md-6 col-xl-3">
+        <div class="fe-card h-100">
+            <div class="d-flex justify-content-between">
+                <div>
+                    <div class="text-muted small">Toplam Cihaz</div>
+                    <h2 class="fw-bold mt-3">@Model.TotalDevices</h2>
+                    <div class="text-muted small">Kayıtlı makineler</div>
+                </div>
+                <div class="fe-stat-icon fe-stat-blue">
+                    <i class="bi bi-cpu"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-xl-3">
+        <div class="fe-card h-100">
+            <div class="d-flex justify-content-between">
+                <div>
+                    <div class="text-muted small">Telemetri Kaydı</div>
+                    <h2 id="feTotalTelemetry" class="fw-bold mt-3">
+                        @Model.TotalTelemetryRecords
+                    </h2>
+                    <div class="text-muted small">Toplam ölçüm</div>
+                </div>
+                <div class="fe-stat-icon fe-stat-green">
+                    <i class="bi bi-activity"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-xl-3">
+        <div class="fe-card h-100">
+            <div class="d-flex justify-content-between">
+                <div>
+                    <div class="text-muted small">Cihaz Olayları</div>
+                    <h2 id="feTotalEvents" class="fw-bold mt-3">
+                        @Model.TotalEventLogs
+                    </h2>
+                    <div class="text-muted small">Olay kayıtları</div>
+                </div>
+                <div class="fe-stat-icon fe-stat-orange">
+                    <i class="bi bi-journal-text"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-xl-3">
+        <div class="fe-card h-100">
+            <div class="d-flex justify-content-between">
+                <div>
+                    <div class="text-muted small">Aktif Kullanıcı</div>
+                    <h2 class="fw-bold mt-3">@Model.ActiveUsers</h2>
+                    <div class="text-muted small">
+                        @Model.TotalUsers toplam kullanıcı
+                    </div>
+                </div>
+                <div class="fe-stat-icon fe-stat-purple">
+                    <i class="bi bi-people"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<div class="row g-4">
+
+    <div class="col-lg-7">
+        <div class="fe-card h-100">
+            <h5 class="fw-bold mb-2">
+                <i class="bi bi-cpu text-primary me-2"></i>
+                Cihaz Yönetimi
+            </h5>
+
+            <p class="text-muted small mb-4">
+                Fabrikanızdaki cihazları görüntüleyin ve
+                gelen telemetri kayıtlarını takip edin.
+            </p>
+
+            <a asp-controller="Devices"
+               asp-action="Index"
+               class="fe-btn-primary">
+                Cihazlara Git
+                <i class="bi bi-arrow-right ms-2"></i>
+            </a>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="fe-card h-100">
+            <h5 class="fw-bold mb-3">
+                <i class="bi bi-people text-primary me-2"></i>
+                Kullanıcılar
+            </h5>
+
+            <div class="fe-summary-row">
+                <span>Toplam</span>
+                <strong>@Model.TotalUsers</strong>
+            </div>
+
+            <div class="fe-summary-row">
+                <span>Aktif</span>
+                <strong>@Model.ActiveUsers</strong>
+            </div>
+
+            <div class="fe-summary-row">
+                <span>Pasif</span>
+                <strong>@(Model.TotalUsers - Model.ActiveUsers)</strong>
+            </div>
+
+            @if (isTenantAdmin)
+            {
+                <a asp-controller="Users"
+                   asp-action="Index"
+                   class="fe-btn-primary mt-4">
+                    Kullanıcı Yönetimi
+                    <i class="bi bi-arrow-right ms-2"></i>
+                </a>
+            }
+        </div>
+    </div>
+
+</div>
+
+<div class="mt-4">
+
+    <div class="mb-3">
+        <h4 class="fw-bold mb-1">
+            <i class="bi bi-bar-chart-line text-primary me-2"></i>
+            Fabrika Verimlilik Özeti
+        </h4>
+
+        <p class="text-muted small mb-0">
+            Son 1 saatlik üretim ve telemetri verileri
+        </p>
+    </div>
+
+    <div class="row g-4">
+
+        <div class="col-md-6 col-xl-3">
+            <div class="fe-card h-100">
+                <div class="text-muted small">Üretim Adedi</div>
+                <h2 id="feProductionCount" class="fw-bold mt-3">
+                    @Model.Efficiency.ProductionCount.ToString("N0")
+                </h2>
+                <div class="text-muted small">Son 1 saat</div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-xl-3">
+            <div class="fe-card h-100">
+                <div class="text-muted small">Fire Adedi</div>
+                <h2 id="feScrapCount" class="fw-bold mt-3">
+                    @Model.Efficiency.ScrapCount.ToString("N0")
+                </h2>
+                <div class="text-muted small">Üretilen hatalı ürün</div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-xl-3">
+            <div class="fe-card h-100">
+                <div class="text-muted small">Fire Oranı</div>
+                <h2 id="feScrapRate" class="fw-bold mt-3">
+                    %@Model.Efficiency.ScrapRate.ToString("N2")
+                </h2>
+                <div class="text-muted small">Fire / Üretim</div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-xl-3">
+            <div class="fe-card h-100">
+                <div class="text-muted small">Çalışma Süresi Oranı</div>
+
+                <h2 id="feRunningRate" class="fw-bold mt-3">
+                    %@Model.Efficiency.RunningRate.ToString("N2")
+                </h2>
+
+                <div class="progress mt-2" style="height: 8px;">
+                    <div id="feRunningProgress"
+                         class="progress-bar bg-success"
+                         role="progressbar"
+                         style="width: @(runningRateCss)%"
+                         aria-valuenow="@runningRateCss"
+                         aria-valuemin="0"
+                         aria-valuemax="100">
+                    </div>
+                </div>
+
+                <div class="text-muted small mt-2">
+                    <span id="feObservedMinutes">
+                        @Model.Efficiency.ObservedMinutes.ToString("N1")
+                    </span>
+                    dakika gözlemlenen süre
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (() => {
+            const connection = new signalR.HubConnectionBuilder()
+                .withUrl("/hubs/device-telemetry")
+                .withAutomaticReconnect()
+                .build();
+
+            const integerFormat = new Intl.NumberFormat("tr-TR", {
+                maximumFractionDigits: 0
+            });
+
+            const decimalFormat = new Intl.NumberFormat("tr-TR", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+
+            const minuteFormat = new Intl.NumberFormat("tr-TR", {
+                minimumFractionDigits: 1,
+                maximumFractionDigits: 1
+            });
+
+            function setText(id, value) {
+                const element = document.getElementById(id);
+
+                if (element)
+                    element.textContent = value;
+            }
+
+            connection.on("DashboardUpdated", data => {
+                setText(
+                    "feTotalTelemetry",
+                    integerFormat.format(data.totalTelemetryRecords)
+                );
+
+                setText(
+                    "feTotalEvents",
+                    integerFormat.format(data.totalEventLogs)
+                );
+
+                const efficiency = data.efficiency;
+
+                if (!efficiency)
+                    return;
+
+                setText(
+                    "feProductionCount",
+                    integerFormat.format(efficiency.productionCount)
+                );
+
+                setText(
+                    "feScrapCount",
+                    integerFormat.format(efficiency.scrapCount)
+                );
+
+                setText(
+                    "feScrapRate",
+                    "%" + decimalFormat.format(efficiency.scrapRate)
+                );
+
+                setText(
+                    "feRunningRate",
+                    "%" + decimalFormat.format(efficiency.runningRate)
+                );
+
+                setText(
+                    "feObservedMinutes",
+                    minuteFormat.format(efficiency.observedMinutes)
+                );
+
+                const progress =
+                    document.getElementById("feRunningProgress");
+
+                if (progress) {
+                    const rate = Math.max(
+                        0,
+                        Math.min(100, efficiency.runningRate)
+                    );
+
+                    progress.style.width = rate + "%";
+                    progress.setAttribute("aria-valuenow", rate);
+                }
+            });
+
+            async function connect() {
+                try {
+                    await connection.start();
+                    await connection.invoke("JoinTenant");
+                }
+                catch (error) {
+                    console.error("Dashboard SignalR hatası:", error);
+                }
+            }
+
+            connection.onreconnected(async () => {
+                try {
+                    await connection.invoke("JoinTenant");
+                }
+                catch (error) {
+                    console.error("Tenant aboneliği başarısız:", error);
+                }
+            });
+
+            connect();
+        })();
+    </script>
+}

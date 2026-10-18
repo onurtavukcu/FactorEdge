@@ -1,0 +1,140 @@
+﻿@using FactorEdge.Application.DTOs.Cameras
+@model CameraResponse
+
+@{
+    ViewData["Title"] = "Kamera Düzenle";
+}
+
+<div class="container-fluid py-4">
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-xl-6">
+
+            <div class="card shadow-sm">
+                <div class="card-header bg-transparent py-3">
+                    <h4 class="mb-0">Kamera Düzenle</h4>
+                </div>
+
+                <div class="card-body">
+
+                    @if (TempData["Error"] is string error)
+                    {
+                        <div class="alert alert-danger">
+                            @error
+                        </div>
+                    }
+
+                    <form asp-controller="Camera"
+                          asp-action="Edit"
+                          asp-route-deviceId="@Model.DeviceId"
+                          method="post">
+
+                        @Html.AntiForgeryToken()
+
+                        <div class="mb-3">
+                            <label class="form-label">
+                                Kamera Kodu
+                            </label>
+
+                            <input value="@Model.DeviceCode"
+                                   class="form-control"
+                                   disabled />
+
+                            <small class="text-muted">
+                                Kamera kodu değiştirilemez.
+                            </small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="Name"
+                                   class="form-label">
+                                Kamera Adı
+                            </label>
+
+                            <input id="Name"
+                                   name="Name"
+                                   value="@Model.Name"
+                                   class="form-control"
+                                   maxlength="200"
+                                   required />
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="StreamUrl"
+                                   class="form-label">
+                                Kamera Yayın Adresi
+                            </label>
+
+                            <input id="StreamUrl"
+                                   name="StreamUrl"
+                                   type="url"
+                                   value="@Model.StreamUrl"
+                                   class="form-control"
+                                   maxlength="2048"
+                                   required />
+
+                            <small class="text-muted">
+                                Yayın adresi değişirse Docker
+                                container yeniden oluşturulur.
+                            </small>
+                        </div>
+
+                        <div class="form-check form-switch mb-4">
+                            <input class="form-check-input"
+                                   type="checkbox"
+                                   role="switch"
+                                   id="IsActive"
+                                   name="IsActive"
+                                   value="true"
+                            @(Model.IsActive ? "checked" : "") />
+
+                            <input type="hidden"
+                                   name="IsActive"
+                                   value="false" />
+
+                            <label class="form-check-label"
+                                   for="IsActive">
+                                Kamera Aktif
+                            </label>
+                        </div>
+
+                        <div class="border rounded p-3 mb-4">
+                            <h6>Mevcut Durum</h6>
+
+                            <div>
+                                <strong>Operatör:</strong>
+                                @Model.OperatorStatus
+                            </div>
+
+                            <div>
+                                <strong>Bağlantı:</strong>
+                                @Model.ConnectionStatus
+                            </div>
+
+                            <div>
+                                <strong>Container:</strong>
+                                @(Model.ContainerName ?? "-")
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2">
+                            <a asp-controller="Camera"
+                               asp-action="Index"
+                               class="btn btn-outline-secondary">
+                                Vazgeç
+                            </a>
+
+                            <button type="submit"
+                                    class="btn btn-primary">
+                                Değişiklikleri Kaydet
+                            </button>
+                        </div>
+
+                    </form>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>

@@ -1,0 +1,141 @@
+﻿
+@using FactorEdge.Domain.Enums
+@model FactorEdge.Application.DTOs.Devices.CreateDeviceRequest
+
+@{
+    ViewData["Title"] = "Yeni Cihaz";
+    Layout = "_TenantLayout";
+}
+
+<h2 class="fe-page-title mb-4">Yeni Cihaz Ekle</h2>
+
+<div class="fe-card">
+    <form asp-controller="Devices"
+          asp-action="Create"
+          method="post">
+
+        @Html.AntiForgeryToken()
+
+        <div asp-validation-summary="All"
+             class="text-danger mb-3"></div>
+
+        <div class="mb-3">
+            <label asp-for="DeviceCode"
+                   class="form-label">Cihaz Kodu</label>
+
+            <input asp-for="DeviceCode"
+                   class="form-control"
+                   placeholder="machine-01" />
+
+            <span asp-validation-for="DeviceCode"
+                  class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Name"
+                   class="form-label">Cihaz Adı</label>
+
+            <input asp-for="Name"
+                   class="form-control"
+                   placeholder="Üretim Bandı 1" />
+
+            <span asp-validation-for="Name"
+                  class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Protocol"
+                   class="form-label">Protokol</label>
+
+            <select asp-for="Protocol"
+                    asp-items="Html.GetEnumSelectList<DeviceProtocol>()"
+                    class="form-select"
+                    id="protocolSelect">
+                <option value="">Protokol seçiniz</option>
+            </select>
+
+            <span asp-validation-for="Protocol"
+                  class="text-danger"></span>
+        </div>
+
+        <div id="modbusSettings" class="d-none">
+
+            <div class="mb-3">
+                <label asp-for="UnitId"
+                       class="form-label">Modbus Unit ID</label>
+
+                <input asp-for="UnitId"
+                       type="number"
+                       min="1"
+                       max="247"
+                       class="form-control" />
+
+                <span asp-validation-for="UnitId"
+                      class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="RegisterMapJson"
+                       class="form-label">Register Map JSON</label>
+
+                <textarea asp-for="RegisterMapJson"
+                          class="form-control"
+                          rows="4"></textarea>
+            </div>
+
+        </div>
+
+        <div class="alert alert-info">
+            Simülatörün IP adresi, portu ve MQTT topic bilgisi
+            cihaz oluşturulurken otomatik belirlenecektir.
+        </div>
+
+        <button type="submit" class="btn btn-success">
+            Cihaz Oluştur
+        </button>
+
+        <a asp-action="Index"
+           class="btn btn-secondary">
+            İptal
+        </a>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        (() => {
+            const protocolSelect =
+                document.getElementById("protocolSelect");
+
+            const modbusSettings =
+                document.getElementById("modbusSettings");
+
+            // Enum adı üzerinden C# tarafından verilen
+            // gerçek numeric enum değerini kullanıyoruz.
+            const modbusValue =
+                '@((int)DeviceProtocol.ModbusTcp)';
+
+            function updateProtocolFields() {
+                const isModbus =
+                    protocolSelect.value === modbusValue;
+
+                modbusSettings.classList.toggle(
+                    "d-none", !isModbus);
+
+                const unitId =
+                    document.getElementById("UnitId");
+
+                unitId.required = isModbus;
+
+                if (!isModbus) {
+                    unitId.value = "";
+                }
+            }
+
+            protocolSelect.addEventListener(
+                "change", updateProtocolFields);
+
+            updateProtocolFields();
+        })();
+    </script>
+}

@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/FactoryEdge.Web/">
+    <Project Path="FactorEdge.Application/FactorEdge.Application.csproj" />
+    <Project Path="FactorEdge.Domain/FactorEdge.Domain.csproj" />
+    <Project Path="FactorEdge.Infrastructure/FactorEdge.Infrastructure.csproj" />
+    <Project Path="FactorEdge.Web/FactorEdge.Web.csproj" />
+  </Folder>
+  <Folder Name="/FactoryEdge.Workers/">
+    <Project Path="FactorEdge.ModbusWorker/FactorEdge.ModbusWorker.csproj" />
+    <Project Path="FactorEdge.MqttWorker/FactorEdge.MqttWorker.csproj" />
+  </Folder>
+  <Project Path="../FactorEdge/FactorEdge.Contracts/FactorEdge.Contracts.csproj" />
+</Solution>

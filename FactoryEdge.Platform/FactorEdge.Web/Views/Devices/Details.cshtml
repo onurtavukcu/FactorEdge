@@ -1,0 +1,516 @@
+﻿
+@model FactorEdge.Application.DTOs.Devices.DeviceTelemetryDetailsDto
+@using System.Text.Json
+@using FactorEdge.Domain.Enums
+
+@{
+    ViewData["Title"] = "Cihaz Detayı";
+    Layout = "_TenantLayout";
+
+    var device = Model.Device;
+    var latest = Model.Latest;
+
+    var initialChartData = Model.Telemetries
+        .OrderBy(x => x.TimestampUtc)
+        .Select(x => new
+        {
+            Time = x.TimestampUtc.ToLocalTime().ToString("HH:mm:ss"),
+            Temperature = x.MotorTemperature,
+            Current = x.MotorCurrent
+        })
+        .ToList();
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fe-page-title mb-1">@device.Name</h2>
+        <p class="fe-page-description mb-0">
+            @device.DeviceCode · @device.Protocol · @device.Host:@device.Port
+        </p>
+    </div>
+
+    <div class="d-flex align-items-center gap-2">
+        <span id="liveStatus" class="badge bg-secondary">
+            Bağlanıyor...
+        </span>
+
+        <a asp-action="Index" class="btn btn-outline-secondary">
+            Cihazlara Dön
+        </a>
+    </div>
+</div>
+
+<div class="fe-card mb-4">
+    <div class="d-flex flex-wrap justify-content-between gap-4">
+        <div>
+            <div class="text-muted small mb-2">Bağlantı Durumu</div>
+            <span id="connectionStatus"
+                  class="badge @(device.IsActive && device.ConnectionStatus == DeviceConnectionStatus.Connected ? "bg-success" : "bg-secondary")">
+                @(device.IsActive ? device.ConnectionStatus.ToString() : "Pasif")
+            </span>
+        </div>
+
+        <div>
+            <div class="text-muted small mb-2">Son Görülme</div>
+            <strong id="lastSeen">
+                @(device.LastSeenUtc?.ToLocalTime().ToString("dd.MM.yyyy HH:mm:ss") ?? "-")
+            </strong>
+        </div>
+
+        <div>
+            <div class="text-muted small mb-2">Protokol</div>
+            <strong>@device.Protocol</strong>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-6 col-xl-3">
+        <div class="fe-card h-100">
+            <div class="text-muted small">Motor Sıcaklığı</div>
+            <h2 class="fw-bold mt-3">
+                <span id="motorTemperature">
+                    @(latest?.MotorTemperature.ToString("N1") ?? "-")
+                </span>
+                <small class="fs-6 text-muted">°C</small>
+            </h2>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-xl-3">
+        <div class="fe-card h-100">
+            <div class="text-muted small">Motor Akımı</div>
+            <h2 class="fw-bold mt-3">
+                <span id="motorCurrent">
+                    @(latest?.MotorCurrent.ToString("N2") ?? "-")
+                </span>
+                <small class="fs-6 text-muted">A</small>
+            </h2>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-xl-3">
+        <div class="fe-card h-100">
+            <div class="text-muted small">Üretim Adedi</div>
+            <h2 class="fw-bold mt-3" id="productionCount">
+                @(latest?.ProductionCount.ToString("N0") ?? "-")
+            </h2>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-xl-3">
+        <div class="fe-card h-100">
+            <div class="text-muted small">Hatalı Ürün</div>
+            <h2 class="fw-bold mt-3" id="scrapCount">
+                @(latest?.ScrapCount.ToString("N0") ?? "-")
+            </h2>
+        </div>
+    </div>
+</div>
+
+<div class="fe-card mb-4">
+    <h5 class="fw-bold mb-1">Motor Telemetrisi</h5>
+    <p class="text-muted small mb-3">
+        Son 50 ölçümün sıcaklık ve akım grafiği.
+    </p>
+
+    <div style="height:320px;position:relative;">
+        <canvas id="telemetryChart"></canvas>
+    </div>
+</div>
+
+<div class="fe-card mb-4">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
+        <div>
+            <h5 class="fw-bold mb-1">Son 1 Saatlik Geçmiş</h5>
+            <p class="text-muted small mb-0">Seçtiğiniz sinyalin son 60 dakikadaki ölçümleri.</p>
+        </div>
+        <div class="d-flex flex-wrap align-items-end gap-2">
+            <div>
+                <label for="historySignal" class="form-label small mb-1">Sinyal</label>
+                <select id="historySignal" class="form-select form-select-sm">
+                    <option value="motorTemperature">Motor Sıcaklığı (°C)</option>
+                    <option value="motorCurrent">Motor Akımı (A)</option>
+                    <option value="productionCount">Üretim Adedi</option>
+                    <option value="scrapCount">Fire Adedi</option>
+                </select>
+            </div>
+            <button type="button" id="historyRefresh" class="btn btn-sm btn-outline-primary">Yenile</button>
+        </div>
+    </div>
+    <p id="historyMessage" class="small text-muted mb-2" role="status">Geçmiş ölçümler yükleniyor...</p>
+    <div style="height:320px;position:relative;">
+        <canvas id="historyChart"></canvas>
+    </div>
+</div>
+
+<div class="fe-card mb-4">
+    <h5 class="fw-bold mb-3">Son Ölçümler</h5>
+
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>Zaman</th>
+                    <th>Sıcaklık</th>
+                    <th>Akım</th>
+                    <th>Üretim</th>
+                    <th>Hatalı</th>
+                    <th>Durum</th>
+                </tr>
+            </thead>
+            <tbody id="telemetryBody">
+                @foreach (var item in Model.Telemetries)
+                {
+                    <tr>
+                        <td>
+                            @item.TimestampUtc.ToLocalTime().ToString("dd.MM.yyyy HH:mm:ss")
+                        </td>
+                        <td>@item.MotorTemperature.ToString("N1") °C</td>
+                        <td>@item.MotorCurrent.ToString("N2") A</td>
+                        <td>@item.ProductionCount</td>
+                        <td>@item.ScrapCount</td>
+                        <td>@((FactorEdge.Contracts.Enums.ProductionLineStatus)item.Status)</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="fe-card mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-bold mb-0">Cihaz Olay Geçmişi</h5>
+        <span class="text-muted small">Son 30 olay</span>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>Zaman</th>
+                    <th>Olay</th>
+                    <th>Önceki Değer</th>
+                    <th>Yeni Değer</th>
+                    <th>Açıklama</th>
+                </tr>
+            </thead>
+            <tbody id="eventBody">
+                @foreach (var item in Model.Events)
+                {
+                    <tr>
+                        <td>
+                            @item.OccurredAtUtc.ToLocalTime().ToString("dd.MM.yyyy HH:mm:ss")
+                        </td>
+                        <td>@item.EventType</td>
+                        <td>@(item.OldValue ?? "-")</td>
+                        <td>@item.NewValue</td>
+                        <td>@(item.Description ?? "-")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@@microsoft/signalr@10.0.0/dist/browser/signalr.min.js"></script>
+
+    <script>
+        (() => {
+            const deviceId = @Html.Raw(JsonSerializer.Serialize(device.Id.ToString()));
+            const chartData = @Html.Raw(JsonSerializer.Serialize(initialChartData));
+            const historyUrl = @Html.Raw(JsonSerializer.Serialize(Url.Action("History", "Devices", new { id = device.Id })));
+
+            const formatDate = value =>
+                value
+                    ? new Date(value).toLocaleString("tr-TR")
+                    : "-";
+
+            const formatNumber = (value, digits = 0) =>
+                value == null
+                    ? "-"
+                    : Number(value).toLocaleString("tr-TR", {
+                        minimumFractionDigits: digits,
+                        maximumFractionDigits: digits
+                    });
+
+            function makeCell(value) {
+                const td = document.createElement("td");
+                td.textContent = String(value ?? "-");
+                return td;
+            }
+
+            function replaceRows(bodyId, rows) {
+                const tbody = document.getElementById(bodyId);
+                tbody.replaceChildren(...rows);
+            }
+
+            const chart = typeof Chart !== "undefined"
+                ? new Chart(document.getElementById("telemetryChart"), {
+                    type: "line",
+                    data: {
+                        labels: chartData.map(x => x.Time),
+                        datasets: [
+                            {
+                                label: "Motor Sıcaklığı (°C)",
+                                data: chartData.map(x => x.Temperature),
+                                borderColor: "#2563eb",
+                                tension: 0.25,
+                                pointRadius: 2,
+                                yAxisID: "y"
+                            },
+                            {
+                                label: "Motor Akımı (A)",
+                                data: chartData.map(x => x.Current),
+                                borderColor: "#16a34a",
+                                tension: 0.25,
+                                pointRadius: 2,
+                                yAxisID: "y1"
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: {
+                            mode: "index",
+                            intersect: false
+                        },
+                        scales: {
+                            y: { position: "left" },
+                            y1: {
+                                position: "right",
+                                grid: { drawOnChartArea: false }
+                            }
+                        }
+                    }
+                })
+                : null;
+
+            // Geçmiş grafiği canlı grafikten bağımsızdır.
+            const historySignal = document.getElementById("historySignal");
+            const historyRefresh = document.getElementById("historyRefresh");
+            const historyMessage = document.getElementById("historyMessage");
+            const historyDefinitions = {
+                motorTemperature: { label: "Motor Sıcaklığı (°C)", color: "#2563eb" },
+                motorCurrent: { label: "Motor Akımı (A)", color: "#16a34a" },
+                productionCount: { label: "Üretim Adedi", color: "#7c3aed" },
+                scrapCount: { label: "Fire Adedi", color: "#ea580c" }
+            };
+            let historyItems = [];
+
+            const historyChart = typeof Chart !== "undefined"
+                ? new Chart(document.getElementById("historyChart"), {
+                    type: "line",
+                    data: { labels: [], datasets: [{ label: "", data: [], borderColor: "#2563eb", tension: 0.2, pointRadius: 1.5 }] },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: true } },
+                        scales: {
+                            x: { title: { display: true, text: "Ölçüm saati" } },
+                            y: { beginAtZero: false }
+                        }
+                    }
+                })
+                : null;
+
+            function drawHistory() {
+                if (!historyChart) {
+                    historyMessage.textContent = "Grafik kütüphanesi yüklenemedi.";
+                    return;
+                }
+
+                const key = historySignal.value;
+                const definition = historyDefinitions[key];
+                const items = [...historyItems].sort((a, b) =>
+                    new Date(a.timestampUtc) - new Date(b.timestampUtc));
+
+                historyChart.data.labels = items.map(x =>
+                    new Date(x.timestampUtc).toLocaleTimeString("tr-TR"));
+                historyChart.data.datasets[0].label = definition.label;
+                historyChart.data.datasets[0].borderColor = definition.color;
+                historyChart.data.datasets[0].data = items.map(x => x[key]);
+                historyChart.update();
+
+                historyMessage.textContent = items.length
+                    ? `${items.length} ölçüm gösteriliyor (son 60 dakika).`
+                    : "Son 60 dakika içerisinde ölçüm bulunamadı.";
+            }
+
+            async function loadHistory() {
+                if (!historyUrl) return;
+                historyRefresh.disabled = true;
+                historyMessage.textContent = "Geçmiş ölçümler yükleniyor...";
+                try {
+                    const response = await fetch(historyUrl, {
+                        credentials: "same-origin",
+                        headers: { "Accept": "application/json" },
+                        cache: "no-store"
+                    });
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    const data = await response.json();
+                    if (!Array.isArray(data)) throw new Error("Geçersiz geçmiş verisi");
+                    historyItems = data;
+                    drawHistory();
+                } catch (error) {
+                    console.error("History load failed:", error);
+                    historyMessage.textContent = "Geçmiş verileri yüklenemedi. Yenile ile tekrar deneyin.";
+                } finally {
+                    historyRefresh.disabled = false;
+                }
+            }
+
+            historySignal.addEventListener("change", drawHistory);
+            historyRefresh.addEventListener("click", loadHistory);
+            loadHistory();
+
+            function updateTelemetry(items) {
+                const latest = items[0];
+
+                document.getElementById("motorTemperature").textContent =
+                    latest ? formatNumber(latest.motorTemperature, 1) : "-";
+
+                document.getElementById("motorCurrent").textContent =
+                    latest ? formatNumber(latest.motorCurrent, 2) : "-";
+
+                document.getElementById("productionCount").textContent =
+                    latest ? formatNumber(latest.productionCount) : "-";
+
+                document.getElementById("scrapCount").textContent =
+                    latest ? formatNumber(latest.scrapCount) : "-";
+
+                const rows = items.map(item => {
+                    const tr = document.createElement("tr");
+                    [
+                        formatDate(item.timestampUtc),
+                        `${formatNumber(item.motorTemperature, 1)} °C`,
+                        `${formatNumber(item.motorCurrent, 2)} A`,
+                        formatNumber(item.productionCount),
+                        formatNumber(item.scrapCount),
+                        String(item.status)
+                    ].forEach(value => tr.appendChild(makeCell(value)));
+
+                    return tr;
+                });
+
+                replaceRows("telemetryBody", rows);
+
+                if (!chart) return;
+
+                const ordered = [...items].reverse();
+
+                chart.data.labels = ordered.map(x =>
+                    new Date(x.timestampUtc).toLocaleTimeString("tr-TR"));
+
+                chart.data.datasets[0].data =
+                    ordered.map(x => x.motorTemperature);
+
+                chart.data.datasets[1].data =
+                    ordered.map(x => x.motorCurrent);
+
+                chart.update("none");
+            }
+
+            function updateEvents(items) {
+                const rows = items.map(item => {
+                    const tr = document.createElement("tr");
+
+                    [
+                        formatDate(item.occurredAtUtc),
+                        item.eventTypeName,
+                        item.oldValue,
+                        item.newValue,
+                        item.description
+                    ].forEach(value => tr.appendChild(makeCell(value)));
+
+                    return tr;
+                });
+
+                replaceRows("eventBody", rows);
+            }
+
+            function updateDevice(device, connectionStatusName) {
+                const badge = document.getElementById("connectionStatus");
+
+                const status = !device.isActive
+                    ? "Pasif"
+                    : connectionStatusName;
+
+                badge.textContent = status;
+
+                badge.className = !device.isActive
+                    ? "badge bg-secondary"
+                    : status === "Connected"
+                        ? "badge bg-success"
+                        : "badge bg-danger";
+
+                document.getElementById("lastSeen").textContent =
+                    formatDate(device.lastSeenUtc);
+            }
+
+            const liveStatus = document.getElementById("liveStatus");
+
+            if (typeof signalR === "undefined") {
+                liveStatus.textContent = "SignalR yüklenemedi";
+                liveStatus.className = "badge bg-danger";
+                return;
+            }
+
+            const connection = new signalR.HubConnectionBuilder()
+                .withUrl("/hubs/device-telemetry")
+                .withAutomaticReconnect()
+                .build();
+
+            connection.on("DeviceUpdated", payload => {
+                if (payload.deviceId.toLowerCase() !== deviceId.toLowerCase())
+                    return;
+
+                updateDevice(payload.device, payload.connectionStatusName);
+                updateTelemetry(payload.telemetries);
+                updateEvents(payload.events);
+            });
+
+            connection.onreconnecting(() => {
+                liveStatus.textContent = "Yeniden bağlanıyor...";
+                liveStatus.className = "badge bg-warning text-dark";
+            });
+
+            connection.onreconnected(async () => {
+                try {
+                    await connection.invoke("JoinDevice", deviceId);
+
+                    liveStatus.textContent = "Canlı";
+                    liveStatus.className = "badge bg-success";
+                } catch (error) {
+                    console.error("Device subscription failed:", error);
+                    liveStatus.textContent = "Abonelik hatası";
+                    liveStatus.className = "badge bg-danger";
+                }
+            });
+
+            connection.onclose(() => {
+                liveStatus.textContent = "Bağlantı kesildi";
+                liveStatus.className = "badge bg-danger";
+            });
+
+            async function start() {
+                try {
+                    await connection.start();
+                    await connection.invoke("JoinDevice", deviceId);
+
+                    liveStatus.textContent = "Canlı";
+                    liveStatus.className = "badge bg-success";
+                } catch (error) {
+                    console.error("SignalR connection failed:", error);
+                    liveStatus.textContent = "Bağlantı hatası";
+                    liveStatus.className = "badge bg-danger";
+                }
+            }
+
+            start();
+        })();
+    </script>
+}

@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="../FactoryEdge.Platform/FactorEdge.CameraWorker/FactorEdge.CameraWorker.csproj" />
+  <Project Path="FactorEdge.Contracts/FactorEdge.Contracts.csproj" Id="7166d9e4-c3e6-446e-9119-b6fe7382326d" />
+  <Project Path="FactorEdge.ModbusSimulator/FactorEdge.ModbusSimulator.csproj" />
+  <Project Path="FactorEdge.MqttSimulator/FactorEdge.MqttSimulator.csproj" />
+</Solution>

@@ -1,0 +1,64 @@
+﻿
+@{
+    ViewData["Title"] = "Erişim Engellendi";
+
+    Layout = User.IsInRole("SuperAdmin")
+        ? "_PlatformLayout"
+        : User.Identity?.IsAuthenticated == true
+            ? "_TenantLayout"
+            : "_AuthLayout";
+
+    var homeController = User.IsInRole("SuperAdmin")
+        ? "Platform"
+        : "Home";
+}
+
+<div class="d-flex align-items-center justify-content-center"
+     style="min-height:65vh;">
+
+    <div class="fe-card text-center"
+         style="max-width:520px;width:100%;padding:50px 35px;">
+
+        <div class="mx-auto mb-4"
+             style="width:88px;height:88px;border-radius:24px;
+                    background:#fff1f2;color:#e11d48;
+                    display:grid;place-items:center;font-size:40px;">
+
+            <i class="bi bi-shield-lock"></i>
+        </div>
+
+        <div style="font-size:64px;font-weight:800;
+                    color:#172a48;line-height:1;">
+            403
+        </div>
+
+        <h2 class="mt-3 mb-3 fw-bold">
+            Erişim Engellendi
+        </h2>
+
+        <p class="text-muted mb-4">
+            Bu sayfayı görüntülemek için gerekli yetkiye
+            sahip değilsiniz.
+        </p>
+
+        @if (User.Identity?.IsAuthenticated == true)
+        {
+            <a asp-controller="@homeController"
+               asp-action="Index"
+               class="fe-btn-primary">
+                <i class="bi bi-house-door me-2"></i>
+                Ana Sayfaya Dön
+            </a>
+        }
+        else
+        {
+            <a asp-controller="Account"
+               asp-action="Login"
+               class="fe-btn-primary">
+                <i class="bi bi-box-arrow-in-right me-2"></i>
+                Giriş Yap
+            </a>
+        }
+
+    </div>
+</div>
