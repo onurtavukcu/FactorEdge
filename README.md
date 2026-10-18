@@ -1,6 +1,6 @@
 # FactorEdge — Mini Akıllı Fabrika
 
-> **Case study / teknik demo dokümantasyonu**  
+> **Teknik demo dokümantasyonu**  
 > Kapsam: Ubuntu üzerindeki MQTT ve Modbus simülatörleri, gerçek IP kamerayı işleyen CameraWorker, Windows üzerinde çalışan MQTT/Modbus tüketici servisleri ve ASP.NET Core web platformu.
 
 ## 1. Kurulum ve çalıştırma adımları
