@@ -10,4 +10,5 @@
     <Project Path="FactorEdge.MqttWorker/FactorEdge.MqttWorker.csproj" />
   </Folder>
   <Project Path="../FactorEdge/FactorEdge.Contracts/FactorEdge.Contracts.csproj" />
+  <Project Path="FactorEdge.Launcher/FactorEdge.Launcher.csproj" Id="cc973d65-fcb9-4daa-b33c-0081b651c22a" />
 </Solution>
